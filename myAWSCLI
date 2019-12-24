@@ -1,0 +1,56 @@
+AWS CLI:
+
+install awscli by choco with aws admin user
+ 1) install choco in ur laptop by using powershell
+ 2) create aws admin user with programatic
+ 3) aws configure (login)
+
+
+1) Create VPC
+   aws ec2 create-vpc --cidr-block 192.168.0.0/16
+
+   "VpcId": "vpc-05bfee593b659a020",
+   
+2) Create my IGW
+   
+   aws ec2 create-internet-gateway
+    
+   "InternetGatewayId": "igw-0d3492f7c7a93e4b3",
+ 
+3) attach myIGW into my vpc
+
+   aws ec2 attach-internet-gateway --vpc-id vpc-05bfee593b659a020 --internet-gateway-id igw-0d3492f7c7a93e4b3
+
+4) Create public subnet
+      
+   aws ec2 create-subnet --vpc-id vpc-05bfee593b659a020 --cidr-block 192.168.1.0/24
+   
+   "SubnetId": "subnet-0e62f15780b848a59"
+   
+ 5) Create public Router
+ 
+    aws ec2 create-route-table --vpc-id vpc-05bfee593b659a020
+	
+	"RouteTableId": "rtb-0eec8011dd35179f3",
+
+6)  subnet to associate with the custom route table
+
+    aws ec2 associate-route-table  --subnet-id subnet-0e62f15780b848a59 --route-table-id rtb-0eec8011dd35179f3
+	
+	"AssociationId": "rtbassoc-034968910655fc51c"
+	
+7) Create a route in the route table that points all traffic (0.0.0.0/0) to the Internet gateway
+
+   aws ec2 create-route --route-table-id rtb-0eec8011dd35179f3 --destination-cidr-block 0.0.0.0/0 --gateway-id igw-0d3492f7c7a93e4b3
+
+	
+8) Create a security group in your VPC, and add a rule that allows SSH access from anywhere.
+
+   aws ec2 create-security-group --group-name SSHAccess --description "Security group for SSH access" --vpc-id vpc-05bfee593b659a020
+   
+    "GroupId": "sg-0bc63335a3a1842d3"
+   aws ec2 authorize-security-group-ingress --group-id sg-0bc63335a3a1842d3 --protocol tcp --port 22 --cidr 0.0.0.0/0
+   
+9) Create Instance
+    aws ec2 run-instances --image-id ami-04763b3055de4860b --count 1 --instance-type t2.micro --key-name virginia --security-group-ids sg-0bc63335a3a1842d3 --subnet-id subnet-0e62f15780b848a59
+    
